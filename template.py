@@ -27,6 +27,8 @@ load_dotenv()
 PRICING_PER_1K_TOKENS = {
     "gpt-4o": {"input": 0.0025, "output": 0.010},
     "gpt-4o-mini": {"input": 0.00015, "output": 0.0006},
+    "openai/gpt-oss-120b": {"input": 0.00015, "output": 0.0006},
+    "openai/gpt-oss-20b": {"input": 0.000075, "output": 0.0003},
 }
 
 # Tên model có thể đổi qua .env — ví dụ khi dùng NVIDIA NIM miễn phí
@@ -71,7 +73,8 @@ def call_openai(
     """
     from openai import OpenAI
 
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"),
+                    base_url=os.getenv("OPENAI_BASE_URL"))
     start = time.perf_counter()
     response = client.chat.completions.create(
         model=model,
@@ -136,7 +139,7 @@ def compare_models(prompt: str) -> dict:
     estimated_output_tokens = len(gpt4o_response.split()) / 0.75
     cost = (
         estimated_output_tokens / 1000
-        * PRICING_PER_1K_TOKENS["gpt-4o"]["output"]
+        * PRICING_PER_1K_TOKENS["LAB_MODEL"]["output"]
     )
     return {
         "gpt4o_response": gpt4o_response,
@@ -181,7 +184,7 @@ def chat_with_system_prompt(
     """
     from openai import OpenAI
 
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"),base_url=os.getenv("OPENAI_BASE_URL"))
     messages = [
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": user_prompt},
@@ -254,7 +257,7 @@ def estimate_cost(prompt: str, response: str, model: str = OPENAI_MODEL) -> dict
     """
     input_tokens = count_tokens(prompt, model)
     output_tokens = count_tokens(response, model)
-    pricing = PRICING_PER_1K_TOKENS.get(model, PRICING_PER_1K_TOKENS["gpt-4o"])
+    pricing = PRICING_PER_1K_TOKENS.get(model, PRICING_PER_1K_TOKENS["LAB_MODEL"])
     input_cost = input_tokens / 1000 * pricing["input"]
     output_cost = output_tokens / 1000 * pricing["output"]
     return {
@@ -293,7 +296,7 @@ def streaming_chatbot() -> None:
     """
     from openai import OpenAI
 
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"),base_url=os.getenv("OPENAI_BASE_URL"))
     history = []
     while True:
         user_msg = input()
@@ -409,7 +412,7 @@ def run_assistant(
     if get_input is None:
         get_input = input
 
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"),base_url=os.getenv("OPENAI_BASE_URL"))
     history = []
     num_turns = 0
     total_tokens = 0
